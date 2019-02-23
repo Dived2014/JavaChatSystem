@@ -1,4 +1,4 @@
-package src.main.java.com.Dived2014.javachatsystem.user.single;/*
+package com.Dived2014.javachatsystem.user.single;/*
  *国伟
  *2019/2/23
  *10:18
@@ -18,7 +18,22 @@ public class SingleThreadUser {
     public static void main(String[] args) {
 
         try {
-            Socket userSocket = new Socket("127.0.0.1",6666);
+
+            int port = 6666;
+            if(args.length>0){
+                try{
+                    port = Integer.parseInt(args[0]);
+                }catch (NumberFormatException e){
+                    System.out.println("Error Input ,Current port:6666");
+                }
+            }
+            String host = "127.0.0.1";
+            if(args.length>1){
+                host = args[1];
+
+            }
+
+            Socket userSocket = new Socket(host,port);
 
             OutputStream useroutput = userSocket.getOutputStream();
             OutputStreamWriter writer = new OutputStreamWriter(useroutput);

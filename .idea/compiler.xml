@@ -6,11 +6,14 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="JavaChatSystem" />
+        <module name="ServerSystem" />
+        <module name="UserSystem" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel target="8">
       <module name="JavaChatSystem" target="1.5" />
+      <module name="ServerSystem" target="1.5" />
+      <module name="UserSystem" target="1.5" />
     </bytecodeTargetLevel>
   </component>
 </project>

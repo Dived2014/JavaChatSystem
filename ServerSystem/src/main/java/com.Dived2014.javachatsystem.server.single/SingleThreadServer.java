@@ -1,4 +1,4 @@
-package src.main.java.com.Dived2014.javachatsystem.server.single;
+package com.Dived2014.javachatsystem.server.single;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,13 +13,20 @@ public class SingleThreadServer{
     public static void main(String[] args) throws IOException {
         try {
 
+            int port = 6666;
+            if(args.length>0){
+                try{
+                    port = Integer.parseInt(args[0]);
+                }catch (NumberFormatException e){
+                    System.out.println("Error Input ,Current port:6666");
+                }
+            }
             ServerSocket serverSocket = null;
-            serverSocket = new ServerSocket(6666);
+            serverSocket = new ServerSocket(port);
 
             System.out.println("waiting connection....");
             Socket clientSocket = serverSocket.accept();
             System.out.println("Connection success:"+clientSocket.getRemoteSocketAddress());
-
 
             InputStream clientInput = clientSocket.getInputStream();
             Scanner scanner = new Scanner(clientInput);
@@ -30,8 +37,6 @@ public class SingleThreadServer{
             OutputStreamWriter writer  = new OutputStreamWriter(clientoutput);
             writer.write("Test2\n");
             writer.flush();
-
-
 
         }catch(IOException e){
             e.printStackTrace();
