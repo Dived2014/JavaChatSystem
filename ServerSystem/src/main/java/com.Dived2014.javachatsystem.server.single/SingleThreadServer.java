@@ -10,9 +10,8 @@ import java.util.Scanner;
 
 public class SingleThreadServer{
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         try {
-
             int port = 6666;
             if(args.length>0){
                 try{
@@ -21,8 +20,7 @@ public class SingleThreadServer{
                     System.out.println("Error Input ,Current port:6666");
                 }
             }
-            ServerSocket serverSocket = null;
-            serverSocket = new ServerSocket(port);
+            ServerSocket serverSocket = new ServerSocket(port);
 
             System.out.println("waiting connection....");
             Socket clientSocket = serverSocket.accept();
