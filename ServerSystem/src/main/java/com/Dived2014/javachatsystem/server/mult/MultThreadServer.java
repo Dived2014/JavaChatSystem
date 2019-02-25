@@ -27,7 +27,6 @@ public class MultThreadServer {
                 executorService.submit(new ExcuteClient(client));
             }
 
-
         } catch (IOException e) {
             e.printStackTrace();
         }
