@@ -24,7 +24,7 @@ public class MultThreadServer {
             while(true){
                 Socket client = serverSocket.accept();
                 System.out.println("Connecting Success!"+client.getRemoteSocketAddress());
-                executorService.submit(new ExcuteClient(client));
+                executorService.submit(new ExecuteClient(client));
             }
 
         } catch (IOException e) {
