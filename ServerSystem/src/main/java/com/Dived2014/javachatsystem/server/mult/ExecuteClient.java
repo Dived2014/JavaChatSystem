@@ -81,13 +81,13 @@ public class ExecuteClient implements Runnable {
         }
     }
 
-    @SuppressWarnings("unchecked")
+
     private void helpInfo() {
-        sendMessage(this.client,"Supported command");
-        sendMessage(this.client,"userName:<name>");
-        sendMessage(this.client,"private:<name>:<message>" );
-        sendMessage(this.client,"group:<message>");
-        sendMessage(this.client,"bye");
+        sendMessage(this.client, "Supported command");
+        sendMessage(this.client, "Register->userName:<name>");
+        sendMessage(this.client, "Direct Message->private:<name>:<message>");
+        sendMessage(this.client, "Group Chat->group:<message>");
+        sendMessage(this.client, "Leave System->bye");
     }
 
     private void printOnlineUser() {

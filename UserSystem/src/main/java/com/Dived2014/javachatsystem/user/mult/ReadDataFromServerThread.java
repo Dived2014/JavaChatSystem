@@ -13,7 +13,7 @@ import java.net.Socket;
 import java.util.Scanner;
 
 public class ReadDataFromServerThread extends Thread {
-    private  final Socket client;
+    private final Socket client;
 
     public ReadDataFromServerThread(Socket client) {
         this.client = client;
@@ -25,12 +25,12 @@ public class ReadDataFromServerThread extends Thread {
         try {
             clientInput = client.getInputStream();
             Scanner sc = new Scanner(clientInput);
-            while (sc.hasNext()){
-                    String message = sc.nextLine();
-                    System.out.println(message);
-                    if(message.equals("bye")){
-                        break;
-                    }
+            while (sc.hasNext()) {
+                String message = sc.nextLine();
+                System.out.println(message);
+                if (message.equals("bye")) {
+                    break;
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
