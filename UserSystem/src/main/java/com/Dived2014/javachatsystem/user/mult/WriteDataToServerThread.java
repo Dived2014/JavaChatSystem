@@ -27,12 +27,12 @@ public class WriteDataToServerThread extends Thread {
             OutputStream clientOutput = client.getOutputStream();
             OutputStreamWriter writer = new OutputStreamWriter(clientOutput);
             Scanner sc = new Scanner(System.in);
-            while(true){
+            while (true) {
                 System.out.println("MsgInput:>");
                 String message = sc.nextLine();
-                writer.write(message+"\n");
+                writer.write(message + "\n");
                 writer.flush();
-                if(message.equals("bye")){
+                if (message.equals("bye")) {
                     client.close();
                     break;
                 }
