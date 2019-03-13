@@ -12,6 +12,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
+import java.sql.*;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.ConcurrentHashMap;
@@ -28,22 +29,46 @@ public class ExecuteClient implements Runnable {
         this.client = client;
     }
 
+    Connection connection;
+
+    private final String selectSql = "select fromwhere,towhere,time,message from chatlog where fromwhere =? and towhere =?";
+    private final String logInsql = "select username,password from userlist where username =? and password =?";
+
     public void run() {
+
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        try {
+            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/JavaChatSystem",
+                    "root","Dived2014");
+            connection.setAutoCommit(false);
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+
         try {
             InputStream clientInput = this.client.getInputStream();
             Scanner sc = new Scanner(clientInput);
             while (true) {
                 String data = sc.nextLine();
                 /**
-                 * userName:<name>
+                 * register:<username>:<password>
+                 * userName:<name>:<password>
                  * private:<name>:<message>
                  * group:<message>
                  * bye
+                 *
                  */
-                if (data.startsWith("userName")) {
+                if (data.startsWith("register")) {
                     String userName = data.split("\\:")[1];
-                    if (data.split("\\:")[0].equals("userName")) {
-                        this.register(userName, client);
+                    String password = data.split("\\:")[2];
+                    if (data.split("\\:")[0].equals("register")) {
+                        this.register(userName,password ,client);
                         continue;
                     }
                 }
@@ -99,11 +124,22 @@ public class ExecuteClient implements Runnable {
     }
 
     private boolean isUserexist(String username) {
-        for (Map.Entry<String, Socket> entry : ONLINE_USER_MAP.entrySet()) {
-            if (entry.getKey().equals(username)) {
+        try {
+            String registSelectsql = "select username from userslist where username =?";
+            PreparedStatement preparedStatement = connection.prepareStatement(registSelectsql);
+            preparedStatement.setString(1,username);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if(resultSet.next()){
+                resultSet.close();
+                preparedStatement.close();
                 return true;
             }
+            resultSet.close();
+            preparedStatement.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
+
         return false;
     }
 
@@ -157,12 +193,25 @@ public class ExecuteClient implements Runnable {
         }
     }
 
-    private void register(String userName, Socket client) {
+    private void register(String userName,String password, Socket client) {
         if (!isUserexist(userName)) {
             System.out.println(userName + " Register Success!"
                     + client.getRemoteSocketAddress());
-            ONLINE_USER_MAP.put(userName, client);
-            printOnlineUser();
+//            ONLINE_USER_MAP.put(userName, client);
+
+            String insertSQL = "insert into userslist values(?,?)";
+            try {
+                PreparedStatement preparedStatement = connection.prepareStatement(insertSQL);
+                preparedStatement.setString(1,userName);
+                preparedStatement.setString(2,password);
+                int ret = preparedStatement.executeUpdate();
+                if(ret != 1){
+                    sendMessage(this.client,"Error:register failure" + "\n");
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+//            printOnlineUser();
             sendMessage(this.client, "Register Success!" + "\n");
         } else {
             sendMessage(this.client, "Error:Username Had already Existed!\n");
