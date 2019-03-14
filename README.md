@@ -1,28 +1,25 @@
-# JavaChatSystem
 # 简单的Java聊天室
 
-## Description
 ## 项目描述
 
 + Support group chat and DM(direct message),just a simple chat system.
 + 支持群聊、私聊的简单聊天系统
 
-## Related Technology
 ## 相关技术
 
 + Java
 + Socket
 + Thread
++ JDBC/MySQL
 
 ## System Features
 ## 系统功能
 
-+ Sign in and sign out
-+ 注册及退出
-+ DM(direct message)
++ 注册、登录及退出
 + 私聊消息
-+ Group chat
-+ 群聊
++ 群聊（广播消息）
++ 服务器存储聊天记录
++ 历史消息回放，用户可以在登陆后可以查看所有向你发送的消息
 
 ## 项目实现
 
@@ -41,8 +38,17 @@
     + 异常信息处理
     + 用户体验（信息展示）
 + 扩展
-    + 数据存储到存储引擎（MySQL）
-    + 注册信息存储
-    + 增加登录功能（用户名+密码）
-    + 历史消息存储
+    + 数据的加密存储
+        + 现在的所有数据，包括账号和密码都是明文存储的，对于实际应用来说非常不友好
+    + 图形化界面
+        + 纯文本端的交互体验不是太好，也无法扩展很多新的功能，比如文件的传输
 
+## 参与项目
++ 你需要在本地建立好一个空仓库
++ 将本项目的代码clone到本地
++ 在完成你的代码后请发送邮件至divedlee@foxmail.com让我知道你完善了哪些部分
++ 在审核通过后我会发给你push的地址（以邮件的方式）    
+
+## 版本信息
++ 当前版本：0.2.0
++ 发布日期：2019.03.14

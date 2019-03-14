@@ -6,7 +6,7 @@
 
     <groupId>com.Dived2014</groupId>
     <artifactId>JavaChatSystem</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0</version>
     <modules>
         <module>ServerSystem</module>
         <module>UserSystem</module>
@@ -17,7 +17,18 @@
     <properties>
         <encoding>UTF-8</encoding>
         <java.version>1.8</java.version>
-
+        <maven.complier.source>${java.version}</maven.complier.source>
+        <maven.comoplier.target>${java.version}</maven.comoplier.target>
     </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>5.1.47</version>
+        </dependency>
+
+    </dependencies>
+
 
 </project>

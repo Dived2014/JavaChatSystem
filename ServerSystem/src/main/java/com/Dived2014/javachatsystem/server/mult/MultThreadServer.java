@@ -10,6 +10,9 @@ package com.Dived2014.javachatsystem.server.mult;/*
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -17,7 +20,6 @@ public class MultThreadServer {
 
     public static void main(String[] args) {
         final ExecutorService executorService = Executors.newFixedThreadPool(10);
-
         try {
             ServerSocket serverSocket = new ServerSocket(6666);
             System.out.println("Wait connection...");

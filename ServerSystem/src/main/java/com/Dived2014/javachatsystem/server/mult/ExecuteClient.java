@@ -13,9 +13,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
 import java.sql.*;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.ConcurrentHashMap;
@@ -46,7 +44,7 @@ public class ExecuteClient implements Runnable {
         }
         try {
             connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/javachatsystem?useSSL=false",
-                    "root","Dived2014");
+                    "root", "Dived2014");
 //            connection.setAutoCommit(false);
 
         } catch (SQLException e) {
@@ -71,7 +69,7 @@ public class ExecuteClient implements Runnable {
                     String userName = data.split("\\:")[1];
                     String password = data.split("\\:")[2];
                     if (data.split("\\:")[0].equals("register")) {
-                        this.register(userName,password ,client);
+                        this.register(userName, password, client);
                         continue;
                     }
                 }
@@ -79,7 +77,7 @@ public class ExecuteClient implements Runnable {
                     String userName = data.split("\\:")[1];
                     String password = data.split("\\:")[2];
                     if (data.split("\\:")[0].equals("userName")) {
-                        this.login(userName,password ,client);
+                        this.login(userName, password);
                         continue;
                     }
                 }
@@ -117,40 +115,54 @@ public class ExecuteClient implements Runnable {
         }
     }
 
-    private void login(String userName, String password,
-                       Socket client) {
-        if(isUserexist(userName)){
+    private void login(String userName, String password) {
+        if (isUserexist(userName)) {
             String logInsql = "select username,password from userslist where username=? and password=?";
             String chatLogsql = "select fromwhere,towhere,time,message from chatlog where towhere=?";
+            PreparedStatement preparedStatement = null;
+            PreparedStatement preparedStatement1 = null;
+            ResultSet resultSet = null;
+            ResultSet resultSet1 = null;
             try {
-                PreparedStatement preparedStatement = connection.prepareStatement(logInsql);
-                preparedStatement.setString(1,userName);
-                preparedStatement.setString(2,password);
-                ResultSet resultSet = preparedStatement.executeQuery();
-                if(resultSet.next()){
+                preparedStatement = connection.prepareStatement(logInsql);
+                preparedStatement.setString(1, userName);
+                preparedStatement.setString(2, password);
+                resultSet = preparedStatement.executeQuery();
+                if (resultSet.next()) {
                     //绑定socket和username
-                    ONLINE_USER_MAP.put(userName,this.client);
+                    ONLINE_USER_MAP.put(userName, this.client);
                     printOnlineUser();
-                    PreparedStatement preparedStatement1 = connection.prepareStatement(chatLogsql);
-                    preparedStatement1.setString(1,userName);
-                    ResultSet resultSet1 = preparedStatement1.executeQuery();
-                    while(resultSet1.next()){
+                    preparedStatement1 = connection.prepareStatement(chatLogsql);
+                    preparedStatement1.setString(1, userName);
+                    resultSet1 = preparedStatement1.executeQuery();
+                    while (resultSet1.next()) {
                         String from = resultSet1.getString("fromwhere");
                         String to = resultSet1.getString("towhere");
                         String time = resultSet1.getTimestamp("time").toString();
                         String message = resultSet1.getString("message");
-                        sendMessage(this.client,String.format("%s %s to %s : %s",time,from,to,message));
+                        sendMessage(this.client, String.format("%s %s to %s : %s", time, from, to, message));
                     }
-
-                }else{
-                    sendMessage(this.client,"Error:Incorrect password");
+                    resultSet1.close();
+                    preparedStatement1.close();
+                } else {
+                    sendMessage(this.client, "Error:Incorrect password");
                 }
+                resultSet.close();
+                preparedStatement.close();
             } catch (SQLException e) {
-                e.printStackTrace();
+                try {
+                    resultSet.close();
+                    preparedStatement.close();
+                    resultSet1.close();
+                    preparedStatement1.close();
+                    e.printStackTrace();
+                } catch (SQLException e1) {
+                    e1.printStackTrace();
+                }
             }
 
-        }else{
-            sendMessage(this.client,"userName do not exist!");
+        } else {
+            sendMessage(this.client, "userName do not exist!");
         }
     }
 
@@ -175,9 +187,9 @@ public class ExecuteClient implements Runnable {
         try {
             String registSelectsql = "select username from userslist where username =?";
             PreparedStatement preparedStatement = connection.prepareStatement(registSelectsql);
-            preparedStatement.setString(1,username);
+            preparedStatement.setString(1, username);
             ResultSet resultSet = preparedStatement.executeQuery();
-            if(resultSet.next()){
+            if (resultSet.next()) {
                 resultSet.close();
                 preparedStatement.close();
                 return true;
@@ -223,27 +235,35 @@ public class ExecuteClient implements Runnable {
     private void groupChat(String message) {
         String currentUserName = this.getCurrentUsername();
         String insertSql = "insert into chatlog values(?,?,?,?)";
-
-
+        PreparedStatement preparedStatement = null;
         for (Map.Entry<String, Socket> entry : ONLINE_USER_MAP.entrySet()) {
             if (!entry.getKey().equals(currentUserName)) {
                 this.sendMessage(entry.getValue(), currentUserName
                         + " Send a Full Server Message:" + message + "\n");
-
                 try {
-                    PreparedStatement preparedStatement = connection.prepareStatement(insertSql);
-                    preparedStatement.setString(1,currentUserName);
-                    preparedStatement.setString(2,entry.getKey());
-                    preparedStatement.setTimestamp(3,Timestamp.valueOf(LocalDateTime.now()));
-                    preparedStatement.setString(4,message);
+                    preparedStatement = connection.prepareStatement(insertSql);
+                    preparedStatement.setString(1, currentUserName);
+                    preparedStatement.setString(2, entry.getKey());
+                    preparedStatement.setTimestamp(3, Timestamp.valueOf(LocalDateTime.now()));
+                    preparedStatement.setString(4, message);
                     int ret = preparedStatement.executeUpdate();
-                    if(ret != 1){
-                        sendMessage(this.client,"send failure,try again later!");
+                    if (ret != 1) {
+                        sendMessage(this.client, "send failure,try again later!");
                     }
                 } catch (SQLException e) {
+                    try {
+                        preparedStatement.close();
+                    } catch (SQLException e1) {
+                        e1.printStackTrace();
+                    }
                     e.printStackTrace();
                 }
             }
+        }
+        try {
+            preparedStatement.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
@@ -257,13 +277,13 @@ public class ExecuteClient implements Runnable {
                     " said to you:" + message + "\n");
             try {
                 PreparedStatement preparedStatement = connection.prepareStatement(insertSql);
-                preparedStatement.setString(1,currentUserName);
-                preparedStatement.setString(2,userName);
-                preparedStatement.setTimestamp(3,Timestamp.valueOf(LocalDateTime.now()));
-                preparedStatement.setString(4,message);
+                preparedStatement.setString(1, currentUserName);
+                preparedStatement.setString(2, userName);
+                preparedStatement.setTimestamp(3, Timestamp.valueOf(LocalDateTime.now()));
+                preparedStatement.setString(4, message);
                 int ret = preparedStatement.executeUpdate();
-                if(ret != 1){
-                    sendMessage(this.client,"send failure,try again later!");
+                if (ret != 1) {
+                    sendMessage(this.client, "send failure,try again later!");
                 }
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -271,22 +291,29 @@ public class ExecuteClient implements Runnable {
         }
     }
 
-    private void register(String userName,String password, Socket client) {
+    private void register(String userName, String password, Socket client) {
         if (!isUserexist(userName)) {
             System.out.println(userName + " Register Success!"
                     + client.getRemoteSocketAddress());
+            PreparedStatement preparedStatement = null;
 //            ONLINE_USER_MAP.put(userName, client);
 
             String insertSQL = "insert into userslist values(?,?)";
             try {
-                PreparedStatement preparedStatement = connection.prepareStatement(insertSQL);
-                preparedStatement.setString(1,userName);
-                preparedStatement.setString(2,password);
+                preparedStatement = connection.prepareStatement(insertSQL);
+                preparedStatement.setString(1, userName);
+                preparedStatement.setString(2, password);
                 int ret = preparedStatement.executeUpdate();
-                if(ret != 1){
-                    sendMessage(this.client,"Error:register failure" + "\n");
+                if (ret != 1) {
+                    sendMessage(this.client, "Error:register failure" + "\n");
                 }
+                preparedStatement.close();
             } catch (SQLException e) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e1) {
+                    e1.printStackTrace();
+                }
                 e.printStackTrace();
             }
 //            printOnlineUser();
