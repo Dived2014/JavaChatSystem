@@ -116,53 +116,58 @@ public class ExecuteClient implements Runnable {
     }
 
     private void login(String userName, String password) {
-        if (isUserexist(userName)) {
-            String logInsql = "select username,password from userslist where username=? and password=?";
-            String chatLogsql = "select fromwhere,towhere,time,message from chatlog where towhere=?";
-            PreparedStatement preparedStatement = null;
-            PreparedStatement preparedStatement1 = null;
-            ResultSet resultSet = null;
-            ResultSet resultSet1 = null;
-            try {
-                preparedStatement = connection.prepareStatement(logInsql);
-                preparedStatement.setString(1, userName);
-                preparedStatement.setString(2, password);
-                resultSet = preparedStatement.executeQuery();
-                if (resultSet.next()) {
-                    //绑定socket和username
-                    ONLINE_USER_MAP.put(userName, this.client);
-                    printOnlineUser();
-                    preparedStatement1 = connection.prepareStatement(chatLogsql);
-                    preparedStatement1.setString(1, userName);
-                    resultSet1 = preparedStatement1.executeQuery();
-                    while (resultSet1.next()) {
-                        String from = resultSet1.getString("fromwhere");
-                        String to = resultSet1.getString("towhere");
-                        String time = resultSet1.getTimestamp("time").toString();
-                        String message = resultSet1.getString("message");
-                        sendMessage(this.client, String.format("%s %s to %s : %s", time, from, to, message));
-                    }
-                    resultSet1.close();
-                    preparedStatement1.close();
-                } else {
-                    sendMessage(this.client, "Error:Incorrect password");
-                }
-                resultSet.close();
-                preparedStatement.close();
-            } catch (SQLException e) {
+        if (isLegalString(userName) && isLegalString(password)) {
+
+            if (isUserexist(userName)) {
+                String logInsql = "select username,password from userslist where username=? and password=?";
+                String chatLogsql = "select fromwhere,towhere,time,message from chatlog where towhere=?";
+                PreparedStatement preparedStatement = null;
+                PreparedStatement preparedStatement1 = null;
+                ResultSet resultSet = null;
+                ResultSet resultSet1 = null;
                 try {
+                    preparedStatement = connection.prepareStatement(logInsql);
+                    preparedStatement.setString(1, userName);
+                    preparedStatement.setString(2, password);
+                    resultSet = preparedStatement.executeQuery();
+                    if (resultSet.next()) {
+                        //绑定socket和username
+                        ONLINE_USER_MAP.put(userName, this.client);
+                        printOnlineUser();
+                        preparedStatement1 = connection.prepareStatement(chatLogsql);
+                        preparedStatement1.setString(1, userName);
+                        resultSet1 = preparedStatement1.executeQuery();
+                        while (resultSet1.next()) {
+                            String from = resultSet1.getString("fromwhere");
+                            String to = resultSet1.getString("towhere");
+                            String time = resultSet1.getTimestamp("time").toString();
+                            String message = resultSet1.getString("message");
+                            sendMessage(this.client, String.format("%s %s to %s : %s", time, from, to, message));
+                        }
+                        resultSet1.close();
+                        preparedStatement1.close();
+                    } else {
+                        sendMessage(this.client, "Error:Incorrect password");
+                    }
                     resultSet.close();
                     preparedStatement.close();
-                    resultSet1.close();
-                    preparedStatement1.close();
-                    e.printStackTrace();
-                } catch (SQLException e1) {
-                    e1.printStackTrace();
+                } catch (SQLException e) {
+                    try {
+                        resultSet.close();
+                        preparedStatement.close();
+                        resultSet1.close();
+                        preparedStatement1.close();
+                        e.printStackTrace();
+                    } catch (SQLException e1) {
+                        e1.printStackTrace();
+                    }
                 }
-            }
 
+            } else {
+                sendMessage(this.client, "userName do not exist!");
+            }
         } else {
-            sendMessage(this.client, "userName do not exist!");
+            sendMessage(this.client, "Error: userName and password can only contains numbers,letters and _ ");
         }
     }
 
@@ -268,58 +273,97 @@ public class ExecuteClient implements Runnable {
     }
 
     private void privateChat(String userName, String message) {
-        String currentUserName = this.getCurrentUsername();
-        Socket target = ONLINE_USER_MAP.get(userName);
-        String insertSql = "insert into chatlog values(?,?,?,?)";
+        if (isLegalString(userName)) {
 
-        if (target != null) {
-            this.sendMessage(target, currentUserName +
-                    " said to you:" + message + "\n");
-            try {
-                PreparedStatement preparedStatement = connection.prepareStatement(insertSql);
-                preparedStatement.setString(1, currentUserName);
-                preparedStatement.setString(2, userName);
-                preparedStatement.setTimestamp(3, Timestamp.valueOf(LocalDateTime.now()));
-                preparedStatement.setString(4, message);
-                int ret = preparedStatement.executeUpdate();
-                if (ret != 1) {
-                    sendMessage(this.client, "send failure,try again later!");
+            String currentUserName = this.getCurrentUsername();
+            Socket target = ONLINE_USER_MAP.get(userName);
+            String insertSql = "insert into chatlog values(?,?,?,?)";
+
+            if (target != null) {
+                this.sendMessage(target, currentUserName +
+                        " said to you:" + message + "\n");
+                try {
+                    PreparedStatement preparedStatement = connection.prepareStatement(insertSql);
+                    preparedStatement.setString(1, currentUserName);
+                    preparedStatement.setString(2, userName);
+                    preparedStatement.setTimestamp(3, Timestamp.valueOf(LocalDateTime.now()));
+                    preparedStatement.setString(4, message);
+                    int ret = preparedStatement.executeUpdate();
+                    if (ret != 1) {
+                        sendMessage(this.client, "send failure,try again later!");
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
                 }
-            } catch (SQLException e) {
-                e.printStackTrace();
             }
+        }else{
+            sendMessage(this.client, "Error: userName and password can only contains numbers,letters and _ ");
         }
     }
 
+    private boolean isLegalString(String str) {
+
+        char[] ch = str.toCharArray();
+        for (char c : ch
+                ) {
+            if (!isLegalChar(c)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean isLegalChar(char ch) {
+        boolean ret = false;
+        if (ch > 'A' && ch < 'Z') {
+            ret = true;
+        }
+        if (ch > 'a' && ch < 'z') {
+            ret = true;
+        }
+        if (ch > '0' && ch < '9') {
+            ret = true;
+        }
+        if (ch == '_') {
+            ret = true;
+        }
+        return ret;
+    }
+
     private void register(String userName, String password, Socket client) {
-        if (!isUserexist(userName)) {
-            System.out.println(userName + " Register Success!"
-                    + client.getRemoteSocketAddress());
-            PreparedStatement preparedStatement = null;
+        if (isLegalString(userName) && isLegalString(password)) {
+
+            if (!isUserexist(userName)) {
+                System.out.println(userName + " Register Success!"
+                        + client.getRemoteSocketAddress());
+                PreparedStatement preparedStatement = null;
 //            ONLINE_USER_MAP.put(userName, client);
 
-            String insertSQL = "insert into userslist values(?,?)";
-            try {
-                preparedStatement = connection.prepareStatement(insertSQL);
-                preparedStatement.setString(1, userName);
-                preparedStatement.setString(2, password);
-                int ret = preparedStatement.executeUpdate();
-                if (ret != 1) {
-                    sendMessage(this.client, "Error:register failure" + "\n");
-                }
-                preparedStatement.close();
-            } catch (SQLException e) {
+                String insertSQL = "insert into userslist values(?,?)";
                 try {
+                    preparedStatement = connection.prepareStatement(insertSQL);
+                    preparedStatement.setString(1, userName);
+                    preparedStatement.setString(2, password);
+                    int ret = preparedStatement.executeUpdate();
+                    if (ret != 1) {
+                        sendMessage(this.client, "Error:register failure" + "\n");
+                    }
                     preparedStatement.close();
-                } catch (SQLException e1) {
-                    e1.printStackTrace();
+                } catch (SQLException e) {
+                    try {
+                        preparedStatement.close();
+                    } catch (SQLException e1) {
+                        e1.printStackTrace();
+                    }
+                    e.printStackTrace();
                 }
-                e.printStackTrace();
-            }
 //            printOnlineUser();
-            sendMessage(this.client, "Register Success!" + "\n");
+                sendMessage(this.client, "Register Success!" + "\n");
+            } else {
+                sendMessage(this.client, "Error:Username Had already Existed!\n");
+            }
         } else {
-            sendMessage(this.client, "Error:Username Had already Existed!\n");
+            sendMessage(this.client, "Error: userName and password can only contains numbers,letters and _ ");
         }
 
     }
